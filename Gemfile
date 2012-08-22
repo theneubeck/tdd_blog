@@ -24,7 +24,6 @@ gem 'jquery-rails'
 
 group :development do
   # gem "ruby-debug19"
-  gem "nifty-generators"
   gem "wirble"
   gem 'annotate', '2.4.1.beta1'
   gem 'hirb'
