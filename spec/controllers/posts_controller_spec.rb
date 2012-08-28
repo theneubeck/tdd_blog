@@ -20,5 +20,99 @@ require 'spec_helper'
 
 describe PostsController do
 
+  it "should fetch all the posts from the database" do
+    blog_post = FactoryGirl.create(:post)
+    get :index
+    assigns[:posts].should == [blog_post]
+  end
 
+
+  it "should fetch all the posts from the database" do
+    blog_post = mock_model(Post)
+    Post.stub!(:all => [blog_post])
+    get :index
+    assigns[:posts].should == [blog_post]
+  end
+  
+  it "should have a new record for post" do
+    get :new
+    assigns[:post].should be_kind_of(Post)
+    assigns[:post].should be_new_record
+  end
+
+  context "#create"  do
+    it "should create a record" do
+      blog_post_params = FactoryGirl.attributes_for(:post)
+      count = Post.count
+      lambda {
+        post :create, :post => blog_post_params
+      }.should change { Post.count }.by(1)
+      assigns[:post].should be_present
+      assigns[:post].should be_kind_of(Post)
+    end
+
+    it "should not redirect on error on title" do
+      blog_post_params = FactoryGirl.attributes_for(:post, :title => "", :body=> "My first post")
+      Post.any_instance.stub(:save).and_return(false)
+      post :create, :post => blog_post_params
+      response.should render_template(:new)
+      assigns[:post].should be_new_record
+    end
+
+    it "should not save if errors" do
+      Post.should_receive(:new).and_return(mock_post = mock("post"))
+      mock_post.should_receive(:save).and_return(false)
+      post :create, :post => "params"
+      response.should render_template(:new)
+    end
+    
+
+    it "should not create a post on errors" do
+      blog_post_params = FactoryGirl.attributes_for(:post, :title => "", :body=> "My first post")
+      posts_count = Post.count
+      post :create, :post => blog_post_params
+      Post.count.should == posts_count
+    end
+
+  end
+  
+  context "edit" do
+    it "should have an existing record" do
+      blog_post = FactoryGirl.create(:post)
+      get :edit, {:id  => blog_post.id }
+      assigns[:post].should == blog_post
+    end
+  end
+  
+  context "update" do
+    
+    it "should update post on put" do
+      post = FactoryGirl.create(:post)
+      old_title = post.title
+      post.title = 'Yet another title'
+      put :update, {:id  => post.id, :post => { :title => post.title, :body => post.body } }    
+      assigns[:post].title.should_not == old_title
+    end
+    
+    it "should not add new post on put" do
+      post = FactoryGirl.create(:post)      
+      posts_count = Post.count
+      put :update, {:id  => post.id, :post => { :title => post.title, :body => post.body } }    
+      Post.count.should == posts_count  
+    end
+    
+    it "should save post on put" do
+      post = FactoryGirl.create(:post)      
+      put :update, {:id  => post.id, :post => { :title => "Ny titel", :body => post.body } }
+      updated_post = Post.find(post.id)
+      updated_post.title.should == "Ny titel"
+    end
+    
+    it "should return an updated post on put" do
+      post = FactoryGirl.create(:post)      
+      put :update, {:id  => post.id, :post => { :title => "Ny titel2", :body => post.body } }
+      assigns[:post].title.should == "Ny titel2"      
+    end
+    
+  end
 end
