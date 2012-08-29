@@ -13,6 +13,5 @@ describe "Blogging", :type => :request do
     page.should have_content("My first post")
   end
     
-  end
 end
 
